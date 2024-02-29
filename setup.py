@@ -16,7 +16,7 @@ def long_description():
 
 setup(
     name='aiocent',
-    version='4.1.1',
+    version='4.1.2',
     description="Async Python library to communicate with Centrifugo v3 HTTP API, fork of pycent package",
     long_description=long_description(),
     long_description_content_type="text/markdown",

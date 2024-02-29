@@ -61,9 +61,15 @@ class Client(object):
         self.timeout = timeout
         self.json_encoder = json_encoder
         self.verify = verify
-        self.session = session or aiohttp.ClientSession(loop=asyncio.new_event_loop())
+        self.session = session
         self.kwargs = kwargs
         self._messages = []
+
+    async def create_session(self):
+        self.session = aiohttp.ClientSession()
+
+    def __del__(self):
+        asyncio.run(self.session.close())
 
     def add(self, method, params):
         data = {
@@ -86,6 +92,8 @@ class Client(object):
         """
         Send a request to a remote web server using HTTP POST.
         """
+        if not self.session:
+            await self.create_session()
         headers = {
             'Content-type': 'application/json'
         }
