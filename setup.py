@@ -2,17 +2,16 @@ import os
 import sys
 from setuptools import setup
 
-
 if sys.argv[-1] == 'test':
     status = os.system('python tests/tests.py')
     sys.exit(1 if status > 127 else status)
-
 
 requirements = ['aiohttp']
 
 
 def long_description():
-    return "Async Python library to communicate with Centrifugo v3 HTTP API, fork of pycent package"
+    with open("README.md") as f:
+        return f.read()
 
 
 setup(
@@ -20,6 +19,7 @@ setup(
     version='4.1.0',
     description="Async Python library to communicate with Centrifugo v3 HTTP API, fork of pycent package",
     long_description=long_description(),
+    long_description_content_type="text/markdown",
     url='https://github.com/valid_var/aiocent',
     download_url='https://github.com/valid_var/aiocent',
     author="Stepan Starovoitov",
