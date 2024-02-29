@@ -93,7 +93,7 @@ class Client(object):
             headers['Authorization'] = 'apikey ' + self.api_key
         try:
             resp = await self.session.post(
-                url, data=data, headers=headers, timeout=self.timeout, verify=self.verify)
+                url, data=data, headers=headers, timeout=self.timeout, verify_ssl=self.verify)
         except aiohttp.ClientError as err:
             raise RequestException(err)
         if resp.status != 200:
