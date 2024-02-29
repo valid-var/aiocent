@@ -92,7 +92,7 @@ check response error manually in your code every time you use methods above.
 For example see calling `stats` method:
 
 ```python
-from cent.core import Client
+from aiocent.core import Client
 
 client = Client("http://localhost:8000", "secret")
 
@@ -107,7 +107,7 @@ print stats
 Compare with code required before to do the same:
 
 ```python
-from cent.core import Client
+from aiocent.core import Client
 
 client = Client("http://localhost:8000", "secret")
 
@@ -126,7 +126,7 @@ print stats
 I.e. here is how to use helper methods:
 
 ```python
-from cent.core import Client
+from aiocent.core import Client
 
 client = Client("http://localhost:8000", "secret")
 
@@ -180,7 +180,7 @@ Added several API methods for client to simplify sending single commands to API.
 For example:
 
 ```python
-from cent.core import Client
+from aiocent.core import Client
 
 client = Client("http://localhost:8000", "development", "secret")
 

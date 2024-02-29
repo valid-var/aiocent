@@ -1,8 +1,6 @@
 # coding: utf-8
-import urllib.parse as urlparse
-import sys
 import json
-import requests
+import aiohttp
 
 
 def to_bytes(s):
@@ -62,7 +60,7 @@ class Client(object):
         self.timeout = timeout
         self.json_encoder = json_encoder
         self.verify = verify
-        self.session = session or requests.Session()
+        self.session = session or aiohttp.ClientSession()
         self.kwargs = kwargs
         self._messages = []
 
@@ -73,17 +71,17 @@ class Client(object):
         }
         self._messages.append(data)
 
-    def send(self, method=None, params=None):
+    async def send(self, method=None, params=None):
         if method and params is not None:
             self.add(method, params)
         messages = self._messages[:]
         self._messages = []
         data = to_bytes(
             "\n".join([json.dumps(x, cls=self.json_encoder) for x in messages]))
-        response = self._send(self.address, data)
+        response = await self._send(self.address, data)
         return [json.loads(x) for x in response.split("\n") if x]
 
-    def _send(self, url, data):
+    async def _send(self, url, data):
         """
         Send a request to a remote web server using HTTP POST.
         """
@@ -93,13 +91,13 @@ class Client(object):
         if self.api_key:
             headers['Authorization'] = 'apikey ' + self.api_key
         try:
-            resp = self.session.post(
+            resp = await self.session.post(
                 url, data=data, headers=headers, timeout=self.timeout, verify=self.verify)
-        except requests.RequestException as err:
+        except aiohttp.ClientError as err:
             raise RequestException(err)
-        if resp.status_code != 200:
-            raise RequestException("wrong status code: %d" % resp.status_code)
-        return resp.content.decode('utf-8')
+        if resp.status != 200:
+            raise RequestException("wrong status code: %d" % resp.status)
+        return (await resp.content.read()).decode('utf-8')
 
     def reset(self):
         self._messages = []
@@ -198,87 +196,87 @@ class Client(object):
             raise ClientNotEmpty(
                 "client command buffer not empty, send commands or reset client")
 
-    def _send_one(self):
-        res = self.send()
+    async def _send_one(self):
+        res = await self.send()
         data = res[0]
         if "error" in data and data["error"]:
             raise ResponseError(data["error"])
         return data.get("result")
 
-    def publish(self, channel, data, skip_history=False):
+    async def publish(self, channel, data, skip_history=False):
         self._check_empty()
         self.add("publish", self.get_publish_params(
             channel, data, skip_history=skip_history))
-        result = self._send_one()
+        result = await self._send_one()
         return result
 
-    def broadcast(self, channels, data, skip_history=False):
+    async def broadcast(self, channels, data, skip_history=False):
         self._check_empty()
         self.add("broadcast", self.get_broadcast_params(
             channels, data, skip_history=skip_history))
-        result = self._send_one()
+        result = await self._send_one()
         return result
 
-    def subscribe(self, user, channel, client=None):
+    async def subscribe(self, user, channel, client=None):
         self._check_empty()
         self.add("subscribe", self.get_subscribe_params(
             user, channel, client=client))
-        self._send_one()
+        await self._send_one()
         return
 
-    def unsubscribe(self, user, channel, client=None):
+    async def unsubscribe(self, user, channel, client=None):
         self._check_empty()
         self.add("unsubscribe", self.get_unsubscribe_params(
             user, channel, client=client))
-        self._send_one()
+        await self._send_one()
         return
 
-    def disconnect(self, user, client=None):
+    async def disconnect(self, user, client=None):
         self._check_empty()
         self.add("disconnect", self.get_disconnect_params(user, client=client))
-        self._send_one()
+        await self._send_one()
         return
 
-    def presence(self, channel):
+    async def presence(self, channel):
         self._check_empty()
         self.add("presence", self.get_presence_params(channel))
-        result = self._send_one()
+        result = await self._send_one()
         return result["presence"]
 
-    def presence_stats(self, channel):
+    async def presence_stats(self, channel):
         self._check_empty()
         self.add("presence_stats", self.get_presence_stats_params(channel))
-        result = self._send_one()
+        result = await self._send_one()
         return {
             "num_clients": result["num_clients"],
             "num_users": result["num_users"],
         }
 
-    def history(self, channel, limit=0, since=None, reverse=False):
+    async def history(self, channel, limit=0, since=None, reverse=False):
         self._check_empty()
         self.add("history", self.get_history_params(
             channel, limit=limit, since=since, reverse=reverse))
-        result = self._send_one()
+        result = await self._send_one()
         return {
             "publications": result.get("publications", []),
             "offset": result.get("offset", 0),
             "epoch": result.get("epoch", ""),
         }
 
-    def history_remove(self, channel):
+    async def history_remove(self, channel):
         self._check_empty()
         self.add("history_remove", self.get_history_remove_params(channel))
-        self._send_one()
+        await self._send_one()
         return
 
-    def channels(self, pattern=""):
+    async def channels(self, pattern=""):
         self._check_empty()
         self.add("channels", params=self.get_channels_params(pattern=pattern))
-        result = self._send_one()
+        result = await self._send_one()
         return result["channels"]
 
-    def info(self):
+    async def info(self):
         self._check_empty()
         self.add("info", self.get_info_params())
-        result = self._send_one()
+        result = await self._send_one()
         return result

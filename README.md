@@ -1,12 +1,12 @@
-CENT
-====
+# AIOCENT
+## async fork of pycent
 
-Python tools to communicate with Centrifugo HTTP API. Python >= 3.3 supported.
+Async Python tools to communicate with Centrifugo HTTP API. Python >= 3.3 supported.
 
 To install run:
 
 ```bash
-pip install cent
+pip install aiocent
 ```
 
 ### High-level library API
@@ -16,7 +16,8 @@ First see [available API methods in documentation](https://centrifugal.dev/docs/
 This library contains `Client` class to send messages to Centrifugo from your python-powered backend:
 
 ```python
-from cent import Client
+from aiocent import Client
+import asyncio
 
 url = "http://localhost:8000/api"
 api_key = "XXX"
@@ -27,16 +28,16 @@ client = Client(url, api_key=api_key, timeout=1)
 # publish data into channel
 channel = "public:chat"
 data = {"input": "test"}
-client.publish(channel, data)
+asyncio.run(client.publish(channel, data))
 
 # other available methods
-client.unsubscribe("user_id", "channel")
-client.disconnect("user_id")
-history = client.history("public:chat")
-presence = client.presence("public:chat")
-channels = client.channels()
-info = client.info()
-client.history_remove("public:chat")
+asyncio.run(client.unsubscribe("user_id", "channel"))
+asyncio.run(client.disconnect("user_id"))
+history = asyncio.run(client.history("public:chat"))
+presence = asyncio.run(client.presence("public:chat"))
+channels = asyncio.run(client.channels())
+info = asyncio.run(client.info())
+asyncio.run(client.history_remove("public:chat"))
 ```
 
 `publish`, `disconnect`, `unsubscribe`, `history_remove` return `None` in case of success. Each of this commands can raise an instance of `CentException`.
@@ -44,11 +45,12 @@ client.history_remove("public:chat")
 I.e.:
 
 ```python
-from cent import Client, CentException
+from aiocent import Client, CentException
+import asyncio
 
 client = Client("http://localhost:8000/api", api_key="XXX", timeout=1)
 try:
-    client.publish("public:chat", {"input": "test"})
+    asyncio.run(client.publish("public:chat", {"input": "test"}))
 except CentException:
     # handle exception
 ```
@@ -65,7 +67,8 @@ Both exceptions inherited from `CentException`.
 To send lots of commands in one request:
 
 ```python
-from cent import Client, CentException
+from aiocent import Client, CentException
+import asyncio
 
 client = Client("http://localhost:8000/api", api_key="XXX", timeout=1)
 
@@ -74,10 +77,10 @@ params = {
     "data": "hello world"
 }
 
-client.add("publish", params)
+asyncio.run(client.add("publish", params))
 
 try:
-    result = client.send()
+    result = asyncio.run(client.send())
 except CentException:
     # handle exception
 else:
