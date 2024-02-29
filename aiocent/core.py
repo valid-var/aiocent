@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import json
 import aiohttp
 
@@ -60,7 +61,7 @@ class Client(object):
         self.timeout = timeout
         self.json_encoder = json_encoder
         self.verify = verify
-        self.session = session or aiohttp.ClientSession()
+        self.session = session or aiohttp.ClientSession(loop=asyncio.new_event_loop())
         self.kwargs = kwargs
         self._messages = []
 
